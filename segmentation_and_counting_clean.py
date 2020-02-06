@@ -2,9 +2,9 @@
 # coding: utf-8
 
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-import matplotlib.patches as mpatches
+#import matplotlib.patches as mpatches
 import numpy as np
 
 import mahotas as mh
@@ -66,42 +66,19 @@ def ieg_segmentation(image_ts, footprint_size, thresh_down, thresh_up, thresh_ra
     labels = watershed(-elev_map, markers, mask=local_masked_global)
 
     label_image = label(labels, connectivity = 1)
-    
-
-    fig, axes = plt.subplots(nrows=2, sharex=True, sharey=True)
-    ax = axes.ravel()
-
-    ax[0].imshow(label_image)
-    ax[0].set_title("Labelled")
-    
-    ax[1].imshow(image_ts)
-    ax[1].set_title("orig img")
-
-    areas = np.array([])
     regions_to_reconsider = []
-
-    for region in regionprops(label_image):
-        areas = np.append(areas, region.area)
-
-   
     nuclei = np.array([])
-
+    
     for region in regionprops(label_image):
         minr, minc, maxr, maxc = region.bbox
-        rect = mpatches.Circle((region.centroid[1], region.centroid[0]), region.major_axis_length, 
-                               fill=False, edgecolor='red', linewidth=2)
+        #rect = mpatches.Circle((region.centroid[1], region.centroid[0]), region.major_axis_length, 
+        #                       fill=False, edgecolor='red', linewidth=2)
         if region.area >= thresh_up:
-            ax[0].add_patch(rect)
+        #    ax[0].add_patch(rect)
             regions_to_reconsider = np.append(regions_to_reconsider, region)
         elif region.area >= thresh_down:
-            nuclei = np.append(nuclei, region)    
-            ax[0].add_patch(rect)
+            nuclei = np.append(nuclei, region)
 
-    for a in ax:
-        a.set_axis_off()
-
-    fig.tight_layout()
-    plt.show()
     return nuclei, regions_to_reconsider, label_image
 
 
@@ -128,15 +105,7 @@ def dapi_segmentation(image_ts, footprint_size, thresh_down, thresh_up, thresh_r
     label_image = label(labels, connectivity = 2)
     
 
-    fig, axes = plt.subplots(nrows=2, sharex=True, sharey=True)
-    ax = axes.ravel()
-
-    ax[0].imshow(label_image)
-    ax[0].set_title("Labelled")
     
-    ax[1].imshow(image_ts)
-    ax[1].set_title("orig img")
-
     areas = np.array([])
     regions_to_reconsider = []
 
@@ -151,22 +120,13 @@ def dapi_segmentation(image_ts, footprint_size, thresh_down, thresh_up, thresh_r
 
     for region in regionprops(label_image):
         minr, minc, maxr, maxc = region.bbox
-        rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
-                                      fill=False, edgecolor='red', linewidth=2)
-
+        
         if region.area >= thresh_up:
-            ax[0].add_patch(rect)
             regions_to_reconsider = np.append(regions_to_reconsider, region)
         elif region.area >= thresh_down:
             new_nucleus = Nucleus(region,len(nuclei))
             nuclei = np.append(nuclei, new_nucleus)      
-            ax[0].add_patch(rect)
 
-    for a in ax:
-        a.set_axis_off()
-
-    fig.tight_layout()
-    plt.show()
     return nuclei, regions_to_reconsider, label_image
 
 
@@ -187,9 +147,7 @@ def prepare_coords_set(coords_tab):
 
 def find_ieg_colloc(ieg_locs, nuclei, to_reevaluate):
     ieg_positive = np.array([])
-    fig, ax = plt.subplots(figsize=(6, 6))
 
-    ax.imshow(thresholded)
     for nucleus in nuclei:
         ieg_no = 0
         for ieg_dot in ieg_locs:
@@ -200,34 +158,17 @@ def find_ieg_colloc(ieg_locs, nuclei, to_reevaluate):
             len_pre = len(nucleus_coords_set)
             
             set_pre = nucleus_coords_set.copy()
-            #print(ieg_coords_set)
+
             nucleus_coords_set.add((int(np.floor(ieg_dot.centroid[0])), int(np.floor(ieg_dot.centroid[1]))))
             len_post = len(nucleus_coords_set)
-            #print(nucleus_coords_set.difference(set_pre))
-            
+
             if (len_pre == len_post):
                 ieg_no +=1
                 if ieg_no == 1:
                     ieg_positive = np.append(ieg_positive, nucleus.idno)
 
-                    minr, minc, maxr, maxc = nucleus.nucelusProps.bbox
-                    rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
-                                                      fill=False, edgecolor='green', linewidth=1)
-                    ax.add_patch(rect)     
-                    minr, minc, maxr, maxc = ieg_dot.bbox
-                    rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
-                                                      fill=False, edgecolor='red', linewidth=1)
-                
-
-                    ax.add_patch(rect)   
         if ieg_no > 1:
             to_reevaluate = np.append(to_reevaluate, nucleus)
-            
-    ax.set_axis_off()
-
-    fig.tight_layout()
-    plt.title("colloc")
-    plt.show()
     return ieg_positive, to_reevaluate
 
 
@@ -236,15 +177,11 @@ to_reevalueate = []
 arc_pos, arc_mult =  find_ieg_colloc(arc_locations, nuclei, to_reevalueate)
 homer_pos, homer_mult =  find_ieg_colloc(homer_locations, nuclei, to_reevalueate)
 
-print('arc len ', len(arc_pos), len(arc_mult))
-print('homer len ', len(homer_pos),len(homer_mult))
+print('nuclei with arc ', len(arc_pos))#, len(arc_mult))
+print('nuclei with homer ', len(homer_pos))#,len(homer_mult))
 
 
-np.intersect1d(arc_pos, homer_pos)
-
-
-# In[22]:
-
-
+double_ieg = np.intersect1d(arc_pos, homer_pos)
+print("nuclei with both iegs ", len(double_ieg))
 
 
