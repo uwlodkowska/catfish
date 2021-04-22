@@ -3,6 +3,8 @@ dir = "/home/ula/catfish/test_scans/"
 margin = 0;
 
 scan_list = getFileList(dir);
+
+scan_list = newArray("CA1_left_glass_1_rat_2_hipp_left_skan_2019-10-08_105903.ome.tiff");
 for (n = 0; n < scan_list.length; n++){
 	filename = scan_list[n];
 	run("TIFF Virtual Stack...", "open=" + dir + filename);
