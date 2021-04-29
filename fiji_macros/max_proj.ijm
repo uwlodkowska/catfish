@@ -1,4 +1,4 @@
-dir = "/home/ula/catfish/test_scans/"
+dir = "/mnt/ula/catfish/test_scans/"
 
 margin = 0;
 
